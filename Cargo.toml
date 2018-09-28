@@ -1,0 +1,13 @@
+[package]
+name = "wal-rs"
+version = "0.1.0"
+authors = ["dtynn <dtynn@163.com>"]
+
+[dependencies]
+crc = "1.8"
+byteorder = "1.2"
+hex = "0.3"
+
+[dev-dependencies]
+rand = "0.5"
+
