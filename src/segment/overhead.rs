@@ -44,9 +44,9 @@ impl Overhead {
         BigEndian::read_u64(&self.0[10..18])
     }
 
-    // pub fn crc32(&self) -> u64 {
-    //     BigEndian::read_u64(&self.0[18..22])
-    // }
+    pub fn crc32(&self) -> u32 {
+        BigEndian::read_u32(&self.0[18..22])
+    }
 
     pub fn valid(&self) -> bool {
         self.0[0] == 0x01 && self.0[1] == 0xff

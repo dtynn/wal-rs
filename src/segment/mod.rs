@@ -122,6 +122,7 @@ impl Segment {
         start: usize,
         mut limit: usize,
         data: &mut Vec<Vec<u8>>,
+        check: bool,
     ) -> IOResult<usize> {
         if start >= self.entry_number {
             return Ok(0);
@@ -137,11 +138,13 @@ impl Segment {
 
         let mut buf = vec![0; limit * OVERHEAD_SIZE];
         let offset = (HEAD_SIZE + start * OVERHEAD_SIZE) as u64;
+        let mut temp = Vec::with_capacity(limit);
 
         fileext::read_exact_at(&self.file, &mut buf, offset)?;
 
         let mut read: usize = 0;
         let mut overhead = Overhead::new();
+        let mut digest = Digest::new(IEEE);
         while read < limit {
             overhead.copy_bytes(&buf[read * OVERHEAD_SIZE..(read + 1) * OVERHEAD_SIZE]);
             if !overhead.valid() {
@@ -150,10 +153,20 @@ impl Segment {
 
             let mut entry = vec![0; overhead.size() as usize];
             fileext::read_exact_at(&self.file, &mut entry, overhead.offset())?;
-            data.push(entry);
+
+            if check {
+                digest.reset();
+                digest.write(&entry);
+                if digest.sum32() != overhead.crc32() {
+                    return Err(Error::new(ErrorKind::InvalidData, "fail to check crc32"));
+                }
+            }
+            temp.push(entry);
 
             read += 1;
         }
+
+        data.append(&mut temp);
 
         Ok(read)
     }

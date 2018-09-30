@@ -142,7 +142,7 @@ impl WAL {
                 None => break,
             };
 
-            let read = segment.read_into(start, n, &mut result)?;
+            let read = segment.read_into(start, n, &mut result, self.cfg.check_crc32)?;
             start += read;
             n -= read;
             self.cursor.position.sequence = segment.sequence();

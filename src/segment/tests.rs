@@ -35,7 +35,7 @@ fn test_read_write() {
 
     let mut data: Vec<Vec<u8>> = Vec::with_capacity(1024);
 
-    let read = seq.read_into(0, buf.len() + 1, &mut data).unwrap();
+    let read = seq.read_into(0, buf.len() + 1, &mut data, true).unwrap();
     assert_eq!(read, buf.len());
     assert_eq!(data.len(), buf.len());
 
@@ -46,7 +46,7 @@ fn test_read_write() {
 
     data.clear();
 
-    let read2 = seq.read_into(255, 100, &mut data).unwrap();
+    let read2 = seq.read_into(255, 100, &mut data, true).unwrap();
     assert_eq!(read2, 100);
     assert_eq!(data.len(), 100);
 
