@@ -11,7 +11,7 @@ homepage = "https://github.com/dtynn/wal-rs"
 documentation = "https://docs.rs/wal-rs"
 repository = "https://github.com/dtynn/wal-rs"
 keywords = ["wal", "disk", "file", "write-ahead-log", "persistence"]
-categories = ["persistence"]
+categories = ["Filesystem"]
 
 [[example]]
 name = "wal"
