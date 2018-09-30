@@ -1,4 +1,7 @@
 ## wal-rs
+[![Crates.io](https://img.shields.io/crates/v/wal-rs.svg)](https://crates.io/crates/wal-rs)
+[![Docs](https://docs.rs/wal-rs/badge.svg)](https://docs.rs/wal-rs)
+
 This is an write-ahead-log implementation.
 
 ### Usage
