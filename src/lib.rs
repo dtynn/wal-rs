@@ -15,5 +15,8 @@ mod fileext;
 mod segment;
 mod wal;
 
+#[cfg(test)]
+mod mock;
+
 pub use config::Config;
 pub use wal::WAL;

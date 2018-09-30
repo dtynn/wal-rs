@@ -8,6 +8,9 @@ use std::path::{Path, PathBuf};
 mod cursor;
 use self::cursor::Cursor;
 
+#[cfg(test)]
+mod tests;
+
 /// WAL write-ahead-log implementation
 pub struct WAL {
     cfg: Config,
@@ -47,10 +50,15 @@ impl WAL {
             read_sequence += 1;
         }
 
-        if segments.is_empty() {
-            cursor.position.sequence = 0;
-            cursor.position.num = 0;
-        };
+        match segments.first() {
+            Some(s) => if s.len() < cursor.position.read as usize {
+                cursor.position.read = 0;
+            },
+            None => {
+                cursor.position.sequence = 0;
+                cursor.position.read = 0;
+            }
+        }
 
         Ok(WAL {
             cfg: cfg,
@@ -109,29 +117,41 @@ impl WAL {
         let mut result: Vec<Vec<u8>> = Vec::with_capacity(n);
 
         let mut seg_read: usize = 0;
+        let mut seg_finished: usize = 0;
         let start_pos = self.cursor.position.clone();
-        let mut start: usize = self.cursor.position.num as usize;
+        let mut start: usize = self.cursor.position.read as usize;
 
         while n > 0 {
             let segment = match self.segments.get(seg_read) {
                 Some(s) if s.len() > start => s,
-                _ => break,
+                Some(_) => {
+                    seg_read += 1;
+                    seg_finished += 1;
+                    start = 0;
+                    continue;
+                }
+                None => break,
             };
 
             let read = segment.read_into(start, n, &mut result)?;
             start += read;
             n -= read;
             self.cursor.position.sequence = segment.sequence();
-            self.cursor.position.num = start as u64;
+            self.cursor.position.read = start as u64;
 
             if n > 0 {
+                if segment.space() > 0 {
+                    break;
+                }
+
                 start = 0;
                 seg_read += 1;
+                seg_finished += 1;
             }
         }
 
-        if seg_read > 1 {
-            for _ in 0..seg_read - 1 {
+        if seg_finished > 0 {
+            for _ in 0..seg_finished {
                 self.segments.remove(0).destory();
             }
         }
@@ -141,5 +161,22 @@ impl WAL {
         }
 
         Ok(result)
+    }
+
+    /// Returns entry number in the wal.
+    pub fn len(&self) -> usize {
+        let mut size: usize = 0;
+
+        for segment in &self.segments {
+            let num = if segment.sequence() == self.cursor.position.sequence {
+                segment.len() - self.cursor.position.read as usize
+            } else {
+                segment.len()
+            };
+
+            size += num;
+        }
+
+        size
     }
 }

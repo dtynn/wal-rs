@@ -1,38 +1,13 @@
-use super::u64_to_hex;
-use super::Segment;
-use rand::{thread_rng, Rng};
-use std::fs;
-use std::path::{Path, PathBuf};
-
-struct TestHome(PathBuf);
-
-impl TestHome {
-    fn new(p: &str) -> TestHome {
-        let dir = PathBuf::from(String::from(p));
-        fs::create_dir_all(&dir).unwrap();
-        TestHome(dir)
-    }
-
-    fn dir(&self) -> &PathBuf {
-        &self.0
-    }
-}
-
-impl Drop for TestHome {
-    fn drop(&mut self) {
-        if self.0.is_dir() {
-            fs::remove_dir_all(&self.0).unwrap();
-        }
-    }
-}
+use mock::{random_bytes, Home};
+use segment::Segment;
+use std::path::Path;
 
 #[test]
 fn test_create_destory() {
-    let testhome = TestHome::new("testdir");
+    let testhome = Home::new("testdir");
 
-    let mut seq = Segment::open(testhome.dir(), 1, 0, true).unwrap();
-    let file_base = u64_to_hex(1);
-    let fname = Path::new(testhome.dir()).join(file_base.clone() + ".dat");
+    let mut seq = Segment::open(&testhome.dir(), 1, 0, true).unwrap();
+    let fname = Path::new(&testhome.dir()).join(Segment::filename(1));
 
     assert!(fname.exists() && fname.is_file());
 
@@ -43,12 +18,12 @@ fn test_create_destory() {
 
 #[test]
 fn test_read_write() {
-    let testhome = TestHome::new("testdir");
+    let testhome = Home::new("testdir");
 
-    let mut seq = Segment::open(testhome.dir(), 1, 0, true).unwrap();
+    let mut seq = Segment::open(&testhome.dir(), 1, 0, true).unwrap();
 
-    let mut buf: [u8; 1024] = [0; 1024];
-    thread_rng().fill(&mut buf);
+    let buf_vec = random_bytes(1024);
+    let buf = buf_vec.as_slice();
 
     let mut written: usize = 0;
     while written < buf.len() {
@@ -83,12 +58,12 @@ fn test_read_write() {
 
 #[test]
 fn test_write_overlimit() {
-    let testhome = TestHome::new("testdir");
+    let testhome = Home::new("testdir");
 
-    let mut seq = Segment::open(testhome.dir(), 1, 128, true).unwrap();
+    let mut seq = Segment::open(&testhome.dir(), 1, 128, true).unwrap();
 
-    let mut buf: [u8; 128] = [0; 128];
-    thread_rng().fill(&mut buf);
+    let buf_vec = random_bytes(128);
+    let buf = buf_vec.as_slice();
 
     let mut written: usize = 0;
     while written < buf.len() {

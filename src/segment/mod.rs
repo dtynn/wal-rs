@@ -33,6 +33,10 @@ pub struct Segment {
 }
 
 impl Segment {
+    pub fn filename(sequence: u64) -> String {
+        u64_to_hex(sequence)
+    }
+
     pub fn open<P: AsRef<OsStr> + ?Sized>(
         dir: &P,
         sequence: u64,
@@ -43,8 +47,7 @@ impl Segment {
             limit = DEFAULT_ENTRY_LIMIT;
         }
 
-        let file_base = u64_to_hex(sequence);
-        let fname = Path::new(dir).join(file_base.clone() + ".dat");
+        let fname = Path::new(dir).join(Segment::filename(sequence));
         let mut file = OpenOptions::new()
             .create(create)
             .read(true)

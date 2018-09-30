@@ -8,12 +8,12 @@ const MAGIC_NUM: [u8; 16] = [
     17, 117, 239, 237, 171, 24, 96, 0, 116, 117, 239, 237, 171, 24, 96, 117,
 ];
 
-const CURSOR_FILE_NAME: &str = "cursor.dat";
+const CURSOR_FILE_NAME: &str = "cursor";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Position {
     pub sequence: u64,
-    pub num: u64,
+    pub read: u64,
 }
 
 pub struct Cursor {
@@ -31,20 +31,20 @@ impl Cursor {
                     fname: fname,
                     position: Position {
                         sequence: 0,
-                        num: 0,
+                        read: 0,
                     },
                 })
             }
             Err(e) => return Err(e),
         };
 
-        let (sequence, num) = read_position(&file)?;
+        let (sequence, read) = read_position(&file)?;
 
         Ok(Cursor {
             fname: fname,
             position: Position {
                 sequence: sequence,
-                num: num,
+                read: read,
             },
         })
     }
@@ -53,7 +53,7 @@ impl Cursor {
         let mut contents = [0; 32];
         contents[..16].clone_from_slice(&MAGIC_NUM[..]);
         BigEndian::write_u64(&mut contents[16..24], self.position.sequence);
-        BigEndian::write_u64(&mut contents[24..32], self.position.num);
+        BigEndian::write_u64(&mut contents[24..32], self.position.read);
         write(&self.fname, contents)
     }
 }
