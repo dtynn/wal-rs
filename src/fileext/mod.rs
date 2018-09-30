@@ -9,7 +9,7 @@ mod fileext_win;
 pub use self::fileext_win::*;
 
 mod allocate;
-pub use self::allocate::*;
+pub use self::allocate::allocate;
 
 use std::fs::File;
 use std::io::{Error, ErrorKind, Result};

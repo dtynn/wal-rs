@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{copy, Error, ErrorKind, Read, Result, Seek, SeekFrom};
+use std::io::{copy, Read, Result, Seek, SeekFrom};
 
 #[derive(Debug)]
 struct ZeroReader {

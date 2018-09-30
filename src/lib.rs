@@ -15,3 +15,4 @@ mod segment;
 mod wal;
 
 pub use config::Config;
+pub use wal::WAL;

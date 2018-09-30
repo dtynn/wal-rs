@@ -1,9 +1,9 @@
 mod overhead;
 
 use self::overhead::{Overhead, OVERHEAD_SIZE};
+use super::fileext;
 use byteorder::{BigEndian, ByteOrder};
 use crc::crc32::{Digest, Hasher32, IEEE};
-use fileext;
 use hex::encode;
 use std::ffi::OsStr;
 use std::fs::{remove_file, File, OpenOptions};
@@ -37,6 +37,7 @@ impl Segment {
         dir: &P,
         sequence: u64,
         mut limit: usize,
+        create: bool,
     ) -> IOResult<Segment> {
         if limit == 0 {
             limit = DEFAULT_ENTRY_LIMIT;
@@ -45,7 +46,7 @@ impl Segment {
         let file_base = u64_to_hex(sequence);
         let fname = Path::new(dir).join(file_base.clone() + ".dat");
         let mut file = OpenOptions::new()
-            .create(true)
+            .create(create)
             .read(true)
             .write(true)
             .open(&fname)?;
@@ -71,16 +72,13 @@ impl Segment {
         })
     }
 
-    pub fn write(&mut self, entry: &[u8]) -> IOResult<()> {
-        if entry.is_empty() {
-            return Ok(());
-        }
-
+    pub fn write(&mut self, entry: &[u8]) -> IOResult<bool> {
         if self.entry_number >= self.entry_limit {
-            return Err(Error::new(ErrorKind::Other, "entry limit exceeded"));
+            return Ok(false);
         }
 
         let offset = self.data_written as u64;
+
         fileext::write_all_at(&self.file, entry, offset)?;
         let written = entry.len();
 
@@ -99,13 +97,31 @@ impl Segment {
 
         self.entry_number += 1;
 
-        Ok(())
+        Ok(true)
     }
 
-    pub fn read(&mut self, start: usize, mut limit: usize) -> IOResult<Vec<Vec<u8>>> {
-        let mut data: Vec<Vec<u8>> = Vec::new();
+    pub fn batch_write(&mut self, mut entries: &[&[u8]]) -> IOResult<usize> {
+        let size = entries.len();
+
+        while !entries.is_empty() {
+            match self.write(entries[0]) {
+                Ok(false) => break,
+                Ok(true) => entries = &entries[1..],
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(size - entries.len())
+    }
+
+    pub fn read_into(
+        &self,
+        start: usize,
+        mut limit: usize,
+        data: &mut Vec<Vec<u8>>,
+    ) -> IOResult<usize> {
         if start >= self.entry_number {
-            return Ok(data);
+            return Ok(0);
         }
 
         if start + limit > self.entry_number {
@@ -113,7 +129,7 @@ impl Segment {
         }
 
         if limit == 0 {
-            return Ok(data);
+            return Ok(0);
         }
 
         let mut buf = vec![0; limit * OVERHEAD_SIZE];
@@ -136,11 +152,19 @@ impl Segment {
             read += 1;
         }
 
-        Ok(data)
+        Ok(read)
+    }
+
+    pub fn sequence(&self) -> u64 {
+        self.sequence
     }
 
     pub fn len(&self) -> usize {
         self.entry_number
+    }
+
+    pub fn space(&self) -> usize {
+        self.entry_limit - self.entry_number
     }
 
     pub fn flush(&mut self) -> IOResult<()> {

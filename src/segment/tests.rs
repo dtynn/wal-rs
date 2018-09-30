@@ -3,7 +3,6 @@ use super::Segment;
 use rand::{thread_rng, Rng};
 use std::error::Error;
 use std::fs;
-use std::mem::drop;
 use std::path::{Path, PathBuf};
 
 struct TestHome(PathBuf);
@@ -32,7 +31,7 @@ impl Drop for TestHome {
 fn test_create_destory() {
     let testhome = TestHome::new("testdir");
 
-    let mut seq = Segment::open(testhome.dir(), 1, 0).unwrap();
+    let mut seq = Segment::open(testhome.dir(), 1, 0, true).unwrap();
     let file_base = u64_to_hex(1);
     let fname = Path::new(testhome.dir()).join(file_base.clone() + ".dat");
 
@@ -47,7 +46,7 @@ fn test_create_destory() {
 fn test_read_write() {
     let testhome = TestHome::new("testdir");
 
-    let mut seq = Segment::open(testhome.dir(), 1, 0).unwrap();
+    let mut seq = Segment::open(testhome.dir(), 1, 0, true).unwrap();
 
     let mut buf: [u8; 1024] = [0; 1024];
     thread_rng().fill(&mut buf);
@@ -60,7 +59,10 @@ fn test_read_write() {
 
     assert_eq!(seq.len(), buf.len());
 
-    let data = seq.read(0, buf.len() + 1).unwrap();
+    let mut data: Vec<Vec<u8>> = Vec::with_capacity(1024);
+
+    let read = seq.read_into(0, buf.len() + 1, &mut data).unwrap();
+    assert_eq!(read, buf.len());
     assert_eq!(data.len(), buf.len());
 
     for (i, v) in data.iter().enumerate() {
@@ -68,10 +70,13 @@ fn test_read_write() {
         assert_eq!(&buf[..(i + 1) as usize].to_vec(), v);
     }
 
-    let data2 = seq.read(255, 100).unwrap();
-    assert_eq!(data2.len(), 100);
+    data.clear();
 
-    for (i, v) in data2.iter().enumerate() {
+    let read2 = seq.read_into(255, 100, &mut data).unwrap();
+    assert_eq!(read2, 100);
+    assert_eq!(data.len(), 100);
+
+    for (i, v) in data.iter().enumerate() {
         assert_eq!((i + 255 + 1) as usize, v.len());
         assert_eq!(&buf[..(i + 255 + 1) as usize].to_vec(), v);
     }
@@ -81,7 +86,7 @@ fn test_read_write() {
 fn test_write_overlimit() {
     let testhome = TestHome::new("testdir");
 
-    let mut seq = Segment::open(testhome.dir(), 1, 128).unwrap();
+    let mut seq = Segment::open(testhome.dir(), 1, 128, true).unwrap();
 
     let mut buf: [u8; 128] = [0; 128];
     thread_rng().fill(&mut buf);

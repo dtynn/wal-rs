@@ -15,17 +15,6 @@ impl Overhead {
         Overhead(a)
     }
 
-    pub fn from_bytes(src: &[u8]) -> Option<Overhead> {
-        if src.len() < 22 {
-            return None;
-        }
-
-        let mut oh = Overhead::new();
-        oh.copy_bytes(&src[..22]);
-
-        Some(oh)
-    }
-
     pub fn write_head(&mut self) {
         self.0[0] = 0x01;
         self.0[1] = 0xff;
@@ -55,9 +44,9 @@ impl Overhead {
         BigEndian::read_u64(&self.0[10..18])
     }
 
-    pub fn crc32(&self) -> u64 {
-        BigEndian::read_u64(&self.0[18..22])
-    }
+    // pub fn crc32(&self) -> u64 {
+    //     BigEndian::read_u64(&self.0[18..22])
+    // }
 
     pub fn valid(&self) -> bool {
         self.0[0] == 0x01 && self.0[1] == 0xff
