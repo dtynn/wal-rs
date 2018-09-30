@@ -1,7 +1,20 @@
 [package]
 name = "wal-rs"
+description = """
+    Write-ahead-log implementation
+"""
 version = "0.1.0"
 authors = ["dtynn <dtynn@163.com>"]
+readme = "README.md"
+license-file = "LICENSE"
+homepage = "https://github.com/dtynn/wal-rs"
+documentation = "https://docs.rs/wal-rs"
+repository = "https://github.com/dtynn/wal-rs"
+keywords = ["wal", "disk", "file", "write-ahead-log", "persistence"]
+categories = ["persistence"]
+
+[[example]]
+name = "wal"
 
 [dependencies]
 crc = "1.8"

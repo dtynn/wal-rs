@@ -26,7 +26,7 @@ fn test_open_reopen() {
         let mut wal = WAL::open(&testhome.dir(), cfg.clone()).unwrap();
 
         for i in 0..buf.len() {
-            wal.write(vec![&buf[..i + 1]].as_slice()).unwrap();
+            wal.write(&buf[..i + 1]).unwrap();
         }
 
         assert_eq!(wal.segments.len(), 3, "{}", title);
@@ -113,10 +113,10 @@ fn test_batch() {
     let dir = testhome.dir();
     let data = random_bytes(entry_num);
     let buf = data.as_slice();
+    let mut wal = WAL::open(&dir, cfg.clone()).unwrap();
 
     {
         let title = "batch write";
-        let mut wal = WAL::open(&dir, cfg.clone()).unwrap();
 
         let mut batch: Vec<&[u8]> = Vec::with_capacity(entry_num);
 
@@ -124,7 +124,7 @@ fn test_batch() {
             batch.push(&buf[0..i + 1]);
         }
 
-        wal.write(&batch).unwrap();
+        wal.batch_write(&batch).unwrap();
 
         assert_eq!(wal.segments.len(), segment_num, "{}", title);
         assert_eq!(wal.len(), entry_num, "{}", title);
@@ -137,7 +137,6 @@ fn test_batch() {
         let mut left = entry_num;
 
         while left > 0 {
-            let mut wal = WAL::open(&dir, cfg.clone()).unwrap();
             assert_eq!(wal.len(), left, "{}", title);
 
             let read = if left < per {

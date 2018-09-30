@@ -69,8 +69,17 @@ impl WAL {
         })
     }
 
-    /// Writes bytes to wal.
-    pub fn write(&mut self, mut data: &[&[u8]]) -> Result<()> {
+    /// Write bytes to wal
+    pub fn write(&mut self, data: &[u8]) -> Result<()> {
+        self.try_allocate(1)?;
+        let segment = self.segments.last_mut().unwrap();
+        segment.write(data)?;
+
+        Ok(())
+    }
+
+    /// Writes multiple entries to wal.
+    pub fn batch_write(&mut self, mut data: &[&[u8]]) -> Result<()> {
         while !data.is_empty() {
             let space = self.try_allocate(data.len())?;
 
@@ -89,10 +98,10 @@ impl WAL {
 
                 return if space > n { Ok(n) } else { Ok(space) };
             }
-            Some(s) => {
-                let _ = s.flush();
+            Some(ss) => {
+                let _ = ss.flush();
             }
-            _ => {}
+            None => {}
         }
 
         let new_seg = Segment::open(

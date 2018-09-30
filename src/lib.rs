@@ -1,4 +1,5 @@
 //! This crate is implementation of an on-disk write-ahead-log
+//!
 
 #![warn(missing_docs)]
 
