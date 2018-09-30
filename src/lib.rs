@@ -4,6 +4,7 @@
 
 extern crate byteorder;
 extern crate crc;
+extern crate fs2;
 extern crate hex;
 
 #[cfg(test)]

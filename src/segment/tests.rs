@@ -1,7 +1,6 @@
 use super::u64_to_hex;
 use super::Segment;
 use rand::{thread_rng, Rng};
-use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -100,9 +99,7 @@ fn test_write_overlimit() {
     assert_eq!(seq.len(), buf.len());
 
     match seq.write(&buf) {
-        Err(ref e) => {
-            assert_eq!(e.description(), "entry limit exceeded");
-        }
+        Ok(false) => {}
         _ => panic!("expecting error `entry limit exceeded`"),
     }
 }

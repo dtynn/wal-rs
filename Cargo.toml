@@ -7,6 +7,7 @@ authors = ["dtynn <dtynn@163.com>"]
 crc = "1.8"
 byteorder = "1.2"
 hex = "0.3"
+fs2 = "0.4"
 
 [dev-dependencies]
 rand = "0.5"
