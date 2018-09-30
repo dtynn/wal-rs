@@ -5,7 +5,7 @@ This is an write-ahead-log implementation.
 1. Add this lib as a dependency
 ```
 [dependencies]
-wal-rs = "0.1"
+wal-rs = "1"
 ```
 
 2. Add the crate reference
